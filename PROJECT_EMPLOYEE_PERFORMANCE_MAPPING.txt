@@ -1,0 +1,164 @@
+Q.	Create a database named employee, then import data_science_team.csv proj_table.csv and emp_record_table.csv into the employee database from the given resources.
+
+ANS -	CREATE DATABASE employee ;
+	USE employee ;
+	SELECT * FROM data_science_team ;
+	SELECT * FROM emp_record_table ;
+	SELECT * FROM proj_table ;	
+
+Q.	Write a query to fetch EMP_ID, FIRST_NAME, LAST_NAME, GENDER, and DEPARTMENT from the employee record table, and make a list of employees and details of their department.
+
+ANS -	SELECT * FROM employee.emp_record_table;
+
+Q.	Write a query to fetch EMP_ID, FIRST_NAME, LAST_NAME, GENDER, DEPARTMENT, and EMP_RATING if the EMP_RATING is: 
+	less than two / greater than four /  between two and four
+
+ANS -	SELECT EMP_ID,FIRST_NAME,LAST_NAME,GENDER,DEPT,EMP_RATING FROM emp_record_table
+	WHERE EMP_RATING < 2 AND EMP_RATING > 4 OR EMP_RATING BETWEEN 2 AND 4 ;
+
+Q.	Write a query to concatenate the FIRST_NAME and the LAST_NAME of employees in the Finance department from the employee table and then give the resultant column alias as NAME.
+
+ANS -	SELECT 
+    	FIRST_NAME,LAST_NAME, 
+    	CONCAT(TRIM(FIRST_NAME), ' ', TRIM(LAST_NAME)) AS NAME
+	FROM emp_record_table
+	WHERE DEPT = 'FINANCE';
+
+Q.	Write a query to list down all the employees from the healthcare and finance departments using union. Take data from the 	employee record table.
+
+ANS -	SELECT FIRST_NAME,EMP_ID FROM emp_record_table
+	WHERE DEPT = 'finance'  
+	UNION
+	SELECT FIRST_NAME, EMP_ID FROM emp_record_table
+	WHERE DEPT = 'HEALTHCARE' ;
+
+Q.	Write a query to list down employee details such as EMP_ID, FIRST_NAME, LAST_NAME, ROLE, DEPARTMENT, and EMP_RATING grouped by dept. 
+	Also include the respective employee rating along with the max emp rating for the department.
+
+ANS -	SELECT 
+    	E.EMP_ID, E.FIRST_NAME, E.LAST_NAME, E.GENDER, E.ROLE, E.EMP_RATING, E.DEPT,
+    	MAX(E.EMP_RATING) OVER (PARTITION BY E.DEPT) AS MAX_RATING
+	FROM 
+    	emp_record_table AS E 
+	JOIN 
+    	data_science_team AS D 
+	ON 
+   	E.DEPT = D.DEPT
+	ORDER BY 
+    	E.EMP_ID;
+
+
+Q.	Write a query to calculate the minimum and the maximum salary of the employees in each role. Take data from the employee record table.
+
+ANS -	SELECT 
+    	ROLE, 
+    	MAX(SALARY) AS MAX_SALARY, 
+    	MIN(SALARY) AS MIN_SALARY
+	FROM 
+    	emp_record_table
+	GROUP BY 
+    	ROLE
+	ORDER BY 
+    	MAX_SALARY DESC;
+
+
+Q.	Write a query to calculate the minimum and the maximum salary of the employees in each role. Take data from the employee record table.
+
+ANS -	SELECT EMP_ID,FIRST_NAME,ROLE, DEPT,EXP,
+	DENSE_RANK() OVER (PARTITION BY DEPT ORDER BY EXP DESC) AS RANK_BASED_ON_EXP
+	FROM emp_record_table ;
+
+
+Q.	Write a query to create a view that displays employees in various countries whose salary is more than six thousand. Take data from the employee record table.
+
+ANS -	CREATE VIEW high_salary_employees AS
+	SELECT 
+    	EMP_ID,
+    	FIRST_NAME,
+    	LAST_NAME,
+    	COUNTRY,
+    	SALARY
+	FROM 
+    	emp_record_table
+	WHERE 
+    	SALARY > 6000;
+	SELECT * FROM employee.high_salary_employees;
+
+
+Q.	Write a query to create a stored procedure to retrieve the details of the employees whose experience is more than three years. Take data from the employee record table.
+
+ANS -	SELECT EMP_ID, FIRST_NAME, LAST_NAME, GENDER, ROLE, DEPT, EXP, COUNTRY, CONTINENT, SALARY, EMP_RATING, MANAGER_ID, PROJ_ID
+	FROM (
+    	SELECT EMP_ID, FIRST_NAME, LAST_NAME, GENDER, ROLE, DEPT, EXP, COUNTRY, CONTINENT, SALARY, EMP_RATING, MANAGER_ID, PROJ_ID
+    	FROM emp_record_table
+    	WHERE EXP > 10
+	) AS subquery;
+
+
+Q.	Write a query to create a stored procedure to retrieve the details of the employees whose experience is more than three years. Take data from the employee record table.
+
+ANS -	DELIMITER //
+	CREATE PROCEDURE Get_Experienced_Employees()
+	BEGIN
+    	SELECT EMP_ID, FIRST_NAME, LAST_NAME, GENDER, ROLE, DEPT, EXP, COUNTRY, CONTINENT, SALARY, EMP_RATING, MANAGER_ID, PROJ_ID
+    	FROM emp_record_table
+    	WHERE EXP > 3;
+	END //
+	DELIMITER ;
+
+
+Q.	Write a query using stored functions in the project table to check whether the job profile assigned to each employee in the data science team matches the organization’s set 	standard.
+
+ANS -	DELIMITER //
+	CREATE FUNCTION Get_Standard_Role(exp INT)
+	RETURNS VARCHAR(50)
+	DETERMINISTIC
+	BEGIN
+    	DECLARE standard_role VARCHAR(50);
+
+   	CASE 
+        WHEN exp <= 2 THEN SET standard_role = 'JUNIOR DATA SCIENTIST';
+        WHEN exp BETWEEN 2 AND 5 THEN SET standard_role = 'ASSOCIATE DATA SCIENTIST';
+        WHEN exp BETWEEN 5 AND 10 THEN SET standard_role = 'SENIOR DATA SCIENTIST';
+        WHEN exp BETWEEN 10 AND 12 THEN SET standard_role = 'LEAD DATA SCIENTIST';
+        WHEN exp BETWEEN 12 AND 16 THEN SET standard_role = 'MANAGER';
+        ELSE SET standard_role = 'UNKNOWN ROLE';
+    	END CASE;
+
+    	RETURN standard_role;
+	END //
+	DELIMITER ;
+
+
+Q.	Write a query to calculate the bonus for all the employees, based on their ratings and salaries (Use the formula: 5% of salary * employee rating).	
+
+ANS -	SELECT 
+    	EMP_ID, 
+    	FIRST_NAME, 
+    	LAST_NAME, 
+    	SALARY, 
+    	EMP_RATING, 
+    	(SALARY * 0.05 * EMP_RATING) AS BONUS
+	FROM 
+    	emp_record_table;
+
+Q.	Write a query to calculate the average salary distribution based on the continent and country. Take data from the employee record table.
+	
+ANS -	SELECT 
+    	EMP_ID, 
+    	ROLE, 
+    	CONTINENT, 
+    	ROUND(AVG(SALARY), 2) AS AVG_SALARY
+	FROM 
+    	emp_record_table
+	GROUP BY 
+    	EMP_ID, ROLE, CONTINENT
+	ORDER BY 
+    	ROLE;
+
+
+
+
+
+
+
